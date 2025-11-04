@@ -1,0 +1,88 @@
+[project]
+name = "datasentience"
+version = "1.0.0"
+description = "AI-powered data center optimization using NVIDIA NIM and AWS SageMaker"
+authors = [
+    {name = "DataSentience Team"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+
+dependencies = [
+    # FastAPI and ASGI server
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "gunicorn>=23.0.0",
+
+    # Environment and configuration
+    "python-dotenv>=1.0.1",
+
+    # HTTP client with connection pooling (optimized)
+    "httpx>=0.27.0",
+
+    # Data processing
+    "pandas>=2.2.3",
+    "numpy>=2.1.3",
+
+    # Vector search (optimized)
+    "faiss-cpu>=1.9.0",
+
+    # Caching and state management
+    "redis>=5.2.0",
+    "diskcache>=5.6.3",
+
+    # Security and resilience
+    "slowapi>=0.1.9",
+    "tenacity>=9.0.0",
+
+    # AWS integration
+    "boto3>=1.35.89",
+
+    # Monitoring and metrics
+    "prometheus-client>=0.21.0",
+
+    # Database
+    "sqlalchemy>=2.0.36",
+    "aiosqlite>=0.20.0",
+
+    # CORS
+    "python-multipart>=0.0.17",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.4",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "pytest-benchmark>=5.1.0",
+    "ruff>=0.8.4",
+    "mypy>=1.13.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "W", "F", "I", "B", "C4", "UP"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"

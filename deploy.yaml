@@ -1,0 +1,187 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: DataSentience - AI Data Center Optimization (AWS & NVIDIA Hackathon)
+
+Parameters:
+  NvidiaApiKey:
+    Type: String
+    NoEcho: true
+    Description: NVIDIA API key from build.nvidia.com/explore/discover
+    MinLength: 1
+
+  DockerTag:
+    Type: String
+    Default: startup-fix
+    Description: Docker image tag to deploy (Docker v2 format compatible)
+    MinLength: 1
+
+  InstanceType:
+    Type: String
+    Default: ml.g5.xlarge
+    Description: SageMaker endpoint instance type (cost optimized for competition)
+    AllowedValues:
+      - ml.m5.large
+      - ml.t3.medium
+      - ml.g5.xlarge
+      - ml.g5.2xlarge
+      - ml.g6e.xlarge
+
+  ReasoningModel:
+    Type: String
+    Default: nvidia/llama-3.1-nemotron-nano-8b-v1
+    Description: NVIDIA NIM reasoning model (must be from whitelist)
+    AllowedValues:
+      - nvidia/llama-3.1-nemotron-nano-8b-v1
+      - nvidia/llama-3.1-nemotron-70b-instruct
+      - nvidia/llama-3.1-nemotron-51b-instruct
+
+  EmbeddingModel:
+    Type: String
+    Default: nvidia/nv-embedqa-e5-v5
+    Description: NVIDIA NIM embedding model (must be from whitelist)
+    AllowedValues:
+      - nvidia/nv-embedqa-e5-v5
+      - nvidia/nv-embed-v2
+
+Resources:
+  # Secrets Manager for NVIDIA API Key
+  NvidiaKeySecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: datasentience/nvidia-api-key
+      Description: NVIDIA API Key for DataSentience
+      SecretString: !Ref NvidiaApiKey
+
+  # IAM Execution Role
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: DataSentienceExecutionRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: sagemaker.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+      Policies:
+        - PolicyName: SecretsAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:DescribeSecret
+                Resource: !Ref NvidiaKeySecret
+        - PolicyName: ECRAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:BatchGetImage
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:GetAuthorizationToken
+                Resource: '*'
+        - PolicyName: LogsAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/sagemaker/*'
+
+  # SageMaker Model
+  DataSentienceModel:
+    Type: AWS::SageMaker::Model
+    Properties:
+      ExecutionRoleArn: !GetAtt ExecutionRole.Arn
+      PrimaryContainer:
+        Image: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/datasentience:${DockerTag}'
+        Environment:
+          SECRET_ARN: !Ref NvidiaKeySecret
+          REASONING_MODEL: !Ref ReasoningModel
+          EMBEDDING_MODEL: !Ref EmbeddingModel
+          FRONTEND_URL: http://datasentience-final-1762168304.s3-website-us-east-1.amazonaws.com
+          EMBEDDING_DIM: !If
+            - IsNvEmbedV2
+            - '4096'
+            - '1024'
+
+  # SageMaker Endpoint Configuration
+  EndpointConfig:
+    Type: AWS::SageMaker::EndpointConfig
+    Properties:
+      ProductionVariants:
+        - ModelName: !GetAtt DataSentienceModel.ModelName
+          VariantName: Primary
+          InstanceType: !Ref InstanceType
+          InitialInstanceCount: 1
+          InitialVariantWeight: 1.0
+
+  # SageMaker Endpoint
+  DataSentienceEndpoint:
+    Type: AWS::SageMaker::Endpoint
+    Properties:
+      EndpointConfigName: !GetAtt EndpointConfig.EndpointConfigName
+
+Conditions:
+  IsNvEmbedV2: !Equals [!Ref EmbeddingModel, 'nvidia/nv-embed-v2']
+
+Outputs:
+  EndpointName:
+    Description: SageMaker Endpoint Name
+    Value: !GetAtt DataSentienceEndpoint.EndpointName
+    Export:
+      Name: !Sub '${AWS::StackName}-EndpointName'
+
+  InvocationsURL:
+    Description: SageMaker /invocations endpoint URL
+    Value: !Sub 'https://runtime.sagemaker.${AWS::Region}.amazonaws.com/endpoints/${DataSentienceEndpoint.EndpointName}/invocations'
+    Export:
+      Name: !Sub '${AWS::StackName}-InvocationsURL'
+
+  PingURL:
+    Description: SageMaker /ping health check URL
+    Value: !Sub 'https://runtime.sagemaker.${AWS::Region}.amazonaws.com/endpoints/${DataSentienceEndpoint.EndpointName}/ping'
+    Export:
+      Name: !Sub '${AWS::StackName}-PingURL'
+
+  MetricsURL:
+    Description: Prometheus /metrics endpoint URL
+    Value: !Sub 'https://runtime.sagemaker.${AWS::Region}.amazonaws.com/endpoints/${DataSentienceEndpoint.EndpointName}/metrics'
+    Export:
+      Name: !Sub '${AWS::StackName}-MetricsURL'
+
+  SecretARN:
+    Description: Secrets Manager Secret ARN
+    Value: !Ref NvidiaKeySecret
+    Export:
+      Name: !Sub '${AWS::StackName}-SecretARN'
+
+  ExecutionRoleARN:
+    Description: IAM Execution Role ARN
+    Value: !GetAtt ExecutionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ExecutionRoleARN'
+
+  ReasoningModelUsed:
+    Description: NVIDIA NIM Reasoning Model
+    Value: !Ref ReasoningModel
+
+  EmbeddingModelUsed:
+    Description: NVIDIA NIM Embedding Model
+    Value: !Ref EmbeddingModel
+
+  EmbeddingDimension:
+    Description: Embedding Vector Dimension
+    Value: !If
+      - IsNvEmbedV2
+      - '4096'
+      - '1024'
