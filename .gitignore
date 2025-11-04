@@ -49,36 +49,26 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
-dist/
 .cache/
+
+# Build outputs (both root and ui/)
+dist/
+ui/dist/
 
 # ===========================================
 # CLOUD & DEPLOYMENT
 # ===========================================
-# AWS
+# AWS SAM (not used, but harmless)
 .aws-sam/
 packaged.yaml
 samconfig.toml
-
-# Terraform
-.terraform/
-*.tfstate
-*.tfstate.backup
-
-# Azure
-.azure/
-
-# GCloud
-.gcloud/
-
-# Docker
-.dockerignore
 
 # ===========================================
 # IDE & OS
 # ===========================================
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 .DS_Store

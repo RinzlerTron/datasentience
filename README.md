@@ -2,7 +2,7 @@
 
 **AI-powered data center optimization preventing failures 48 hours early, saving $125K per incident through predictive maintenance.**
 
-Built with **NVIDIA NIM** | **AWS SageMaker** | **FastAPI**
+![NVIDIA NIM](https://img.shields.io/badge/NVIDIA-NIM-76B900?logo=nvidia&logoColor=white) ![AWS SageMaker](https://img.shields.io/badge/AWS-SageMaker-FF9900?logo=amazon-aws&logoColor=white)
 
 _NVIDIA-AWS Hackathon 2025_
 
@@ -25,13 +25,6 @@ Three specialized AI agents process data center telemetry in sequence:
 
 True multi-agent coordination where each agent builds on previous agent outputs, powered by NVIDIA NIM reasoning models and AWS SageMaker inference endpoints.
 
-## Technology Stack
-
-- **NVIDIA NIM**: llama-3.1-nemotron-nano-8b-v1 reasoning + nv-embedqa-e5-v5 embeddings
-- **AWS SageMaker**: Real-time inference endpoints with health monitoring
-- **Python FastAPI**: Production WSGI with rate limiting and circuit breakers
-- **React**: Real-time chat interface with multi-agent visualization
-
 ## 🚀 One-Click Deploy
 
 [![Launch Stack](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?templateURL=https://raw.githubusercontent.com/RinzlerTron/datasentience/main/deploy.yaml)
@@ -42,7 +35,7 @@ True multi-agent coordination where each agent builds on previous agent outputs,
 - NVIDIA API key from [build.nvidia.com](https://build.nvidia.com/explore/discover)
 - Docker installed and running (for local build)
 
-Click the **Launch Stack** button above to deploy directly to your AWS account via CloudFormation. 
+Click the **Launch Stack** button above to deploy directly to your AWS account via CloudFormation.
 
 **Note:** The Launch Stack deployment requires a Docker image to already exist in ECR. If deploying for the first time, use the "Deploy from Source" method below which builds and pushes the image automatically. For subsequent deployments, you can use Launch Stack with an existing image tag.
 
@@ -69,6 +62,13 @@ The deployment script automates the entire process:
 **Deployment Time:** ~15-20 minutes total (includes SageMaker endpoint initialization)
 
 **Note:** The Launch Stack button handles all infrastructure setup automatically. You only need an AWS account and NVIDIA API key. No manual AWS console configuration required.
+
+## Technology Stack
+
+- **NVIDIA NIM**: llama-3.1-nemotron-nano-8b-v1 reasoning + nv-embedqa-e5-v5 embeddings
+- **AWS SageMaker**: Real-time inference endpoints with health monitoring
+- **Python FastAPI**: Production WSGI with rate limiting and circuit breakers
+- **React**: Real-time chat interface with multi-agent visualization
 
 ## Architecture Details
 
