@@ -64,4 +64,3 @@ Post-competition roadmap includes:
 - **Multi-Facility Orchestration**: Cross-data center optimization strategies
 - **Vendor Integration**: Direct API connectivity with equipment manufacturers
 - **Regulatory Compliance**: Industry-specific audit trails and reporting
-- **Edge Deployment**: Local inference for latency-sensitive operations
